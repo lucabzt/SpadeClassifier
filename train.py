@@ -13,10 +13,11 @@ import os
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 DATASET_PATH = "./playing_card_dataset.pt"
 PATH_TO_IMAGES = 'data/Images/Images'
 PATH_TO_LABELS = 'data/annotation.json'
+IMG_SIZE = (640,480)
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
@@ -27,18 +28,18 @@ if device != 'cpu':
 
 
 # DATASET, train/test split, create dataloaders
-dataset: PlayingCardDataset = PlayingCardDataset(PATH_TO_IMAGES, PATH_TO_LABELS)
+dataset: PlayingCardDataset = PlayingCardDataset(PATH_TO_IMAGES, PATH_TO_LABELS, img_size=IMG_SIZE)
 train_set, test_set = torch.utils.data.random_split(dataset, [0.8, 0.2])
 train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True), DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
 
 # LOAD MODEL
 model = SpadeClassifier(53).to(device)
-# model.load_state_dict(torch.load("pretrained_models/model_99.pt", weights_only=True))
+# model.load_state_dict(torch.load("model_99_.pt", weights_only=True))
 
 
 # TRAINING PARAMS
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
 loss_fn = torch.nn.CrossEntropyLoss()
 train_loss = []
 test_loss = []
@@ -56,6 +57,7 @@ def train_one_epoch() -> None:
     for iteration, data in enumerate(train_load):
         # Get data and move to the correct device
         images, labels = data
+        images = PlayingCardDataset.apply_transformation(images)
         images = images.to(device)
         labels = labels.to(device)
 
@@ -64,7 +66,7 @@ def train_one_epoch() -> None:
 
         # Forward pass
         outputs = model(images)
-        correct += torch.sum((outputs.argmax(dim=1) == labels.argmax(dim=1))).item()
+        correct += torch.sum((outputs.argmax(dim=1) == labels)).item()
         total += labels.size(0)
 
         loss = loss_fn(outputs, labels)
@@ -102,7 +104,7 @@ def test_one_epoch() -> None:
 
             # Accuracy calculation
             predicted_classes = outputs.argmax(dim=1)
-            true_classes = labels.argmax(dim=1)
+            true_classes = labels
             total_correct += (predicted_classes == true_classes).sum().item()
             total_samples += labels.size(0)
 

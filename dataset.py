@@ -13,29 +13,43 @@ from mapping import cards
 
 
 class PlayingCardDataset(Dataset):
-    def __init__(self, images_path, labels_path):
-        transform = transforms.Compose([
-            transforms.Resize((640, 480)),
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomVerticalFlip(p=0.5),
-            transforms.RandomRotation(degrees=10),
-            transforms.ColorJitter(brightness=0.1, contrast=0.1),
+    def __init__(self, images_path, labels_path, img_size=(640,480)):
+        self.transforms = transforms.Compose([
+            transforms.Resize(img_size),
             transforms.ToTensor()
-        ])
+            ])
 
-        # Load COCO dataset with transform applied
+        # Load COCO dataset
         coco_dataset = CocoDetection(root=images_path,
-                                     annFile=labels_path,
-                                     transform=transform)
+                                     annFile=labels_path)
         self.data = coco_dataset
         self.len = len(coco_dataset)
         self.label_size = len(cards)
+        self.img_size = img_size
 
     def __getitem__(self, index):
         image, lab = self.data.__getitem__(index)
-        one_hot = torch.zeros(self.label_size)
-        one_hot[lab[0]['category_id'] - 1] = 1
-        return image, one_hot
+        image = self.transforms(image)
+        label_T = torch.tensor(lab[0]['category_id']-1)
+        return image, label_T
 
     def __len__(self):
         return self.len
+    
+    @staticmethod
+    def apply_transformation(images):
+        """
+        Method for applying more transformations to the training data.
+        Supports batched inputs.
+        """
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomRotation(degrees=10),
+            transforms.ToTensor()
+        ])
+        
+        # Apply transformations to each image in the batch
+        transformed_images = torch.stack([transform(image) for image in images])
+        return transformed_images
