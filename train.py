@@ -13,11 +13,11 @@ import os
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 DATASET_PATH = "./playing_card_dataset.pt"
 PATH_TO_IMAGES = 'data/Images/Images'
 PATH_TO_LABELS = 'data/annotation.json'
-IMG_SIZE = (640,480)
+IMG_SIZE = (320, 240)
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
