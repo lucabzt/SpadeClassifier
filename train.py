@@ -18,6 +18,7 @@ BATCH_SIZE = 32
 PATH_TO_IMAGES = 'data/playing_cards_large/images'
 PATH_TO_LABELS = 'data/playing_cards_large/labels'
 IMG_SIZE = (240,240)
+ACCURACY_THRESHOLD = 0.7
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
@@ -40,7 +41,7 @@ model = SpadeClassifier(52).to(device)
 
 # TRAINING PARAMS
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
-loss_fn = torch.nn.CrossEntropyLoss()
+loss_fn = torch.nn.BCEWithLogitsLoss()
 train_loss = []
 test_loss = []
 epochs = 200
@@ -66,8 +67,9 @@ def train_one_epoch() -> None:
 
         # Forward pass
         outputs = model(images)
-        correct += torch.sum((outputs.argmax(dim=1) == labels)).sum().item()
-        total += labels.size(0)
+        predicted_one_hot = (outputs > ACCURACY_THRESHOLD)
+        correct += torch.sum(predicted_one_hot == outputs).sum().item()
+        total += len(labels.flatten())
 
         loss = loss_fn(outputs, labels)
 
@@ -103,11 +105,10 @@ def test_one_epoch() -> None:
             running_loss += loss.item()
 
             # Accuracy calculation
-            predicted_classes = outputs.argmax(dim=1)
-            true_classes = labels
+            predict_one_hot = (outputs > ACCURACY_THRESHOLD)
             # print(torch.cat((predicted_classes, true_classes), dim=1))
-            total_correct += (predicted_classes == true_classes).sum().item()
-            total_samples += labels.size(0)
+            total_correct += (predict_one_hot == labels).sum().item()
+            total_samples += len(labels.flatten())
 
     # Calculate average loss and accuracy
     running_loss /= len(test_load)
