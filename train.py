@@ -12,18 +12,20 @@ import os
 
 
 # PARAMS
+print(torch.version.cuda)
+print(torch.cuda.is_available())
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 32
 DATASET_PATH = "./playing_card_dataset.pt"
-PATH_TO_IMAGES = 'data/Images/Images'
-PATH_TO_LABELS = 'data/annotation.json'
-IMG_SIZE = (320, 240)
+PATH_TO_IMAGES = 'archive/Images/Images'
+PATH_TO_LABELS = 'archive/annotation.json'
+IMG_SIZE = (640, 480)
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
 # SAVE GPU FROM SETTING ON FIRE
 if device != 'cpu':
-    torch.cuda.set_per_process_memory_fraction(0.8, device=0)
+    torch.cuda.set_per_process_memory_fraction(0.9, device=0)
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
