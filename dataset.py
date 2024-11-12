@@ -28,9 +28,9 @@ class PlayingCardDataset(Dataset):
         self.img_size = img_size
 
     def __getitem__(self, index):
-        image, lab = self.data.__getitem__(index)
+        image, anno = self.data.__getitem__(index)
         image = self.transforms(image)
-        label_T = torch.tensor(lab[0]['category_id']-1)
+        label_T = torch.tensor([label['category_id']-1 for label in anno])
         return image, label_T
 
     def __len__(self):

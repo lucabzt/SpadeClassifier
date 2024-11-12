@@ -5,6 +5,7 @@ Skript for training the SpadeClassifier model on the playing_card_dataset.
 # IMPORTS
 import torch
 from dataset import PlayingCardDataset
+from yolo_dataset import YoloCustomDataset
 from torch.utils.data import DataLoader
 from SpadeClassifier import SpadeClassifier
 import matplotlib.pyplot as plt
@@ -14,10 +15,9 @@ import os
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 BATCH_SIZE = 32
-DATASET_PATH = "./playing_card_dataset.pt"
-PATH_TO_IMAGES = 'data/Images/Images'
-PATH_TO_LABELS = 'data/annotation.json'
-IMG_SIZE = (320, 240)
+PATH_TO_IMAGES = 'data/playing_cards_large/images'
+PATH_TO_LABELS = 'data/playing_cards_large/labels'
+IMG_SIZE = (240,240)
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
@@ -28,14 +28,14 @@ if device != 'cpu':
 
 
 # DATASET, train/test split, create dataloaders
-dataset: PlayingCardDataset = PlayingCardDataset(PATH_TO_IMAGES, PATH_TO_LABELS, img_size=IMG_SIZE)
+dataset: YoloCustomDataset = YoloCustomDataset(PATH_TO_IMAGES, PATH_TO_LABELS, img_size=IMG_SIZE)
 train_set, test_set = torch.utils.data.random_split(dataset, [0.8, 0.2])
 train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True), DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
 
 # LOAD MODEL
-model = SpadeClassifier(53).to(device)
-# model.load_state_dict(torch.load("model_99_.pt", weights_only=True))
+model = SpadeClassifier(52).to(device)
+# model.load_state_dict(torch.load("model_99_.pt", weights_only=True, map_location=device))
 
 
 # TRAINING PARAMS
@@ -57,7 +57,7 @@ def train_one_epoch() -> None:
     for iteration, data in enumerate(train_load):
         # Get data and move to the correct device
         images, labels = data
-        images = PlayingCardDataset.apply_transformation(images)
+        # images = PlayingCardDataset.apply_transformation(images)
         images = images.to(device)
         labels = labels.to(device)
 
@@ -66,7 +66,7 @@ def train_one_epoch() -> None:
 
         # Forward pass
         outputs = model(images)
-        correct += torch.sum((outputs.argmax(dim=1) == labels)).item()
+        correct += torch.sum((outputs.argmax(dim=1) == labels)).sum().item()
         total += labels.size(0)
 
         loss = loss_fn(outputs, labels)
@@ -105,6 +105,7 @@ def test_one_epoch() -> None:
             # Accuracy calculation
             predicted_classes = outputs.argmax(dim=1)
             true_classes = labels
+            # print(torch.cat((predicted_classes, true_classes), dim=1))
             total_correct += (predicted_classes == true_classes).sum().item()
             total_samples += labels.size(0)
 
