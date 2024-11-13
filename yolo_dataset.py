@@ -22,6 +22,7 @@ class YoloCustomDataset(Dataset):
         image = cv2.imread(image_path)
         image = cv2.resize(image, self.img_size)
         image = torch.tensor(image)
+        image = image.permute(2, 0, 1).float()
 
         # Open the labels file
         with open(label_path, 'r') as file:

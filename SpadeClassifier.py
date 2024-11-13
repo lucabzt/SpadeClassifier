@@ -79,6 +79,7 @@ class SpadeClassifier(torch.nn.Module):
         self.layer4 = self._make_layer(256, 512, num_layers[3], downsample=True)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512, num_classes)
+        self.sigmoid = nn.Sigmoid()
 
     @staticmethod
     def _make_layer(in_features: int, features: int, num_layers: int, downsample: bool = False) -> nn.Sequential:
@@ -105,9 +106,11 @@ class SpadeClassifier(torch.nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        # Decoder
+        # HEAD
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
         x = self.fc(x)
+
+        x = self.sigmoid(x)
 
         return x
