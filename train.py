@@ -36,8 +36,8 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 
 # LOAD MODEL
-model = SpadeClassifier(52).to(device)
-# model.load_state_dict(torch.load("model_99_.pt", weights_only=True, map_location=device))
+model = SpadeClassifier(53).to(device)
+model.load_state_dict(torch.load("pretrained_models/model_142/model.pt", weights_only=True, map_location=device))
 
 
 # TRAINING PARAMS
@@ -89,7 +89,8 @@ def train_one_epoch() -> None:
         optimizer.zero_grad()
 
         # Forward pass
-        outputs = model(images)
+        outputs = model(images)[:, :52]
+        outputs = torch.sigmoid(outputs)
 
         # Calculate batch metrics and accumulate
         tp, fp, tn, fn = compute_pos_neg(labels, outputs > ACCURACY_THRESHOLD)
@@ -129,7 +130,8 @@ def test_one_epoch() -> None:
             labels = label_batch.to(device)
 
             # Forward pass
-            outputs = model(images)
+            outputs = model(images)[:, :52]
+            outputs = torch.sigmoid(outputs)
             loss = loss_fn(outputs, labels)
             running_loss += loss.item()
 

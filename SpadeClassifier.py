@@ -111,6 +111,4 @@ class SpadeClassifier(torch.nn.Module):
         x = x.view(x.size(0), -1)
         x = self.fc(x)
 
-        x = self.sigmoid(x)
-
         return x
