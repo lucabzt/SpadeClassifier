@@ -19,7 +19,7 @@ TRAIN_SET = 'data/playing_cards_large/train'
 TEST_SET = 'data/playing_cards_large/test'
 VAL_SET = 'data/playing_cards_large/val'
 IMG_SIZE = (240,240)
-ACCURACY_THRESHOLD = 0.7
+CONFIDENCE_TRESHOLD = 0.7
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
@@ -51,7 +51,7 @@ epochs = 200
 # EVALUATE
 def compute_pos_neg(labels, preds):
     # Convert predictions to binary values using threshold
-    preds_binary = (preds >= ACCURACY_THRESHOLD).int()
+    preds_binary = (preds >= CONFIDENCE_TRESHOLD).int()
     labels = labels.int()
 
     # Calculate True Positives, False Positives, True Negatives, False Negatives
@@ -93,7 +93,7 @@ def train_one_epoch() -> None:
         outputs = torch.sigmoid(outputs)
 
         # Calculate batch metrics and accumulate
-        tp, fp, tn, fn = compute_pos_neg(labels, outputs > ACCURACY_THRESHOLD)
+        tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_TRESHOLD)
         total_tp += tp
         total_fp += fp
         total_tn += tn
@@ -136,7 +136,7 @@ def test_one_epoch() -> None:
             running_loss += loss.item()
 
             # Calculate batch metrics and accumulate
-            tp, fp, tn, fn = compute_pos_neg(labels, outputs > ACCURACY_THRESHOLD)
+            tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_TRESHOLD)
             total_tp += tp
             total_fp += fp
             total_tn += tn
