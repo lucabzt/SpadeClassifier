@@ -18,8 +18,8 @@ BATCH_SIZE = 32
 TRAIN_SET = 'data/playing_cards_large/train'
 TEST_SET = 'data/playing_cards_large/test'
 VAL_SET = 'data/playing_cards_large/val'
-IMG_SIZE = (240,240)
-CONFIDENCE_TRESHOLD = 0.7
+IMG_SIZE = (480, 480) # 4080 brennt!
+CONFIDENCE_THRESHOLD = 0.2
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
@@ -37,7 +37,7 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 # LOAD MODEL
 model = SpadeClassifier(53).to(device)
-model.load_state_dict(torch.load("pretrained_models/model_142/model.pt", weights_only=True, map_location=device))
+model.load_state_dict(torch.load("pretrained_models/old/model_142/model.pt", weights_only=True, map_location=device))
 
 
 # TRAINING PARAMS
@@ -51,7 +51,7 @@ epochs = 200
 # EVALUATE
 def compute_pos_neg(labels, preds):
     # Convert predictions to binary values using threshold
-    preds_binary = (preds >= CONFIDENCE_TRESHOLD).int()
+    preds_binary = (preds >= CONFIDENCE_THRESHOLD).int()
     labels = labels.int()
 
     # Calculate True Positives, False Positives, True Negatives, False Negatives
@@ -93,7 +93,7 @@ def train_one_epoch() -> None:
         outputs = torch.sigmoid(outputs)
 
         # Calculate batch metrics and accumulate
-        tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_TRESHOLD)
+        tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_THRESHOLD)
         total_tp += tp
         total_fp += fp
         total_tn += tn
@@ -136,7 +136,7 @@ def test_one_epoch() -> None:
             running_loss += loss.item()
 
             # Calculate batch metrics and accumulate
-            tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_TRESHOLD)
+            tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_THRESHOLD)
             total_tp += tp
             total_fp += fp
             total_tn += tn
@@ -163,7 +163,7 @@ for epoch in range(epochs):
     plt.clf()
     plt.plot(train_loss, label="Training loss")
     plt.plot(test_loss, label="Test Loss")
-    plt.ylim(0,2)
+    plt.ylim(0, 2)
     plt.legend()
     plt.savefig(f"pretrained_models/model_{epoch}/plot.png")
     torch.save(model.state_dict(), f"pretrained_models/model_{epoch}/model.pt")
