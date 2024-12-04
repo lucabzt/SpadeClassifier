@@ -163,6 +163,7 @@ for epoch in range(epochs):
     plt.clf()
     plt.plot(train_loss, label="Training loss")
     plt.plot(test_loss, label="Test Loss")
+    plt.ylim(0,2)
     plt.legend()
     plt.savefig(f"pretrained_models/model_{epoch}/plot.png")
     torch.save(model.state_dict(), f"pretrained_models/model_{epoch}/model.pt")
