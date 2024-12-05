@@ -14,9 +14,9 @@ import os
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 1
-TRAIN_SET = 'playing_cards_large/train'
-TEST_SET = 'playing_cards_large/test'
+BATCH_SIZE = 16
+TRAIN_SET = 'data/train'
+TEST_SET = 'data/test'
 VAL_SET = 'playing_cards_large/val'
 IMG_SIZE = (480, 480) # 4080 brennt!
 print(f"MODEL RUNNING ON DEVICE: {device}")
