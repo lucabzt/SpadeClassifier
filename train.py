@@ -1,5 +1,5 @@
 """
-Skript for training the SpadeClassifier model on the playing_card_dataset.
+Script for training the SpadeClassifier model on the playing_card_dataset.
 """
 
 # IMPORTS
@@ -14,19 +14,17 @@ import os
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 32
-TRAIN_SET = 'data/playing_cards_large/train'
-TEST_SET = 'data/playing_cards_large/test'
-VAL_SET = 'data/playing_cards_large/val'
+BATCH_SIZE = 1
+TRAIN_SET = 'playing_cards_large/train'
+TEST_SET = 'playing_cards_large/test'
+VAL_SET = 'playing_cards_large/val'
 IMG_SIZE = (480, 480) # 4080 brennt!
-CONFIDENCE_THRESHOLD = 0.2
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
 # SAVE GPU FROM SETTING ON FIRE
 if device != 'cpu':
     torch.cuda.set_per_process_memory_fraction(0.8, device=0)
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
 
 # DATASET, train/test split, create dataloaders
@@ -37,12 +35,12 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 # LOAD MODEL
 model = SpadeClassifier(53).to(device)
-model.load_state_dict(torch.load("pretrained_models/old/model_142/model.pt", weights_only=True, map_location=device))
+model.load_state_dict(torch.load("finetuned_models/model.pt", weights_only=True, map_location=device))
 
 
 # TRAINING PARAMS
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=1e-4)
-loss_fn = torch.nn.BCELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
+loss_fn = torch.nn.BCEWithLogitsLoss()
 train_loss = []
 test_loss = []
 epochs = 200
@@ -50,8 +48,11 @@ epochs = 200
 
 # EVALUATE
 def compute_pos_neg(labels, preds):
-    # Convert predictions to binary values using threshold
-    preds_binary = (preds >= CONFIDENCE_THRESHOLD).int()
+    # Convert predictions to binary values using top 3 values
+    preds = torch.sigmoid(preds)
+    preds_binary = torch.zeros_like(preds)
+    preds_indices = torch.topk(preds, 3, dim=1).indices
+    preds_binary[torch.arange(len(preds_binary)).unsqueeze(1), preds_indices] = 1
     labels = labels.int()
 
     # Calculate True Positives, False Positives, True Negatives, False Negatives
@@ -90,10 +91,9 @@ def train_one_epoch() -> None:
 
         # Forward pass
         outputs = model(images)[:, :52]
-        outputs = torch.sigmoid(outputs)
 
         # Calculate batch metrics and accumulate
-        tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_THRESHOLD)
+        tp, fp, tn, fn = compute_pos_neg(labels, outputs)
         total_tp += tp
         total_fp += fp
         total_tn += tn
@@ -112,7 +112,7 @@ def train_one_epoch() -> None:
         if iteration % 100 == 0:
             # Compute metrics over the entire training set
             accuracy, precision, recall, f1 = calculate_metrics(total_tp, total_fp, total_tn, total_fn)
-            print(f"Metrics - Accuracy: {accuracy:.2f}%, Precision: {precision:.2f}, Recall: {recall:.2f}, F1-Score: {f1:.2f}")
+            print(f"Metrics - Accuracy: {(accuracy*100):.2f}%, Precision: {(100*precision):.2f}%, Recall: {(100*recall):.2f}%, F1-Score: {(100*f1):.2f}%")
 
     train_loss.append(running_loss / len(train_load))
 
@@ -131,12 +131,11 @@ def test_one_epoch() -> None:
 
             # Forward pass
             outputs = model(images)[:, :52]
-            outputs = torch.sigmoid(outputs)
             loss = loss_fn(outputs, labels)
             running_loss += loss.item()
 
             # Calculate batch metrics and accumulate
-            tp, fp, tn, fn = compute_pos_neg(labels, outputs > CONFIDENCE_THRESHOLD)
+            tp, fp, tn, fn = compute_pos_neg(labels, outputs)
             total_tp += tp
             total_fp += fp
             total_tn += tn
@@ -145,7 +144,7 @@ def test_one_epoch() -> None:
     # Compute metrics over the entire test set
     accuracy, precision, recall, f1 = calculate_metrics(total_tp, total_fp, total_tn, total_fn)
     print("--------------------")
-    print(f"Test Metrics - Accuracy: {accuracy:.2f}%, Precision: {precision:.2f}, Recall: {recall:.2f}, F1-Score: {f1:.2f}")
+    print(f"Test Metrics - Accuracy: {(accuracy * 100):.2f}%, Precision: {(precision * 100):.2f}%, Recall: {(recall * 100):.2f}%, F1-Score: {(f1 * 100):.2f}%")
     print(f"Test Loss: {running_loss / len(test_load):.4f}")
 
     test_loss.append(running_loss / len(test_load))
@@ -154,7 +153,7 @@ def test_one_epoch() -> None:
 # TRAINING LOOP
 for epoch in range(epochs):
     print(f"-- Starting Epoch {epoch}: --")
-    train_one_epoch()
+    #train_one_epoch()
     test_one_epoch()
     torch.cuda.empty_cache()  # Empty memory cache of GPU
 
