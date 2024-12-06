@@ -35,12 +35,12 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 
 # LOAD MODEL
-model = SpadeClassifier(53).to(device)
+model = SpadeClassifier(52).to(device)
 
 
 # TRAINING PARAMS
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
-loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.full([53], 16))
+loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.full([52], 16))
 train_loss = []
 test_loss = []
 epochs = 50
