@@ -36,12 +36,11 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 # LOAD MODEL
 model = SpadeClassifier(53).to(device)
-model.load_state_dict(torch.load("old_models/model_142/model.pt", map_location=device))
 
 
 # TRAINING PARAMS
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
-loss_fn = torch.nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-4)
+loss_fn = torch.nn.BCEWithLogitsLoss(pos_weight=torch.full([53], 16))
 train_loss = []
 test_loss = []
 epochs = 50
@@ -91,7 +90,7 @@ def train_one_epoch() -> None:
         optimizer.zero_grad()
 
         # Forward pass
-        outputs = model(images)[:, :52]
+        outputs = model(images)
 
         # Calculate batch metrics and accumulate
         tp, fp, tn, fn = compute_pos_neg(labels, outputs)
@@ -131,7 +130,7 @@ def test_one_epoch() -> None:
             labels = label_batch.to(device)
 
             # Forward pass
-            outputs = model(images)[:, :52]
+            outputs = model(images)
             loss = loss_fn(outputs, labels)
             running_loss += loss.item()
 
