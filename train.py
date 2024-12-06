@@ -14,7 +14,7 @@ import os
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 TRAIN_SET = 'data/train'
 TEST_SET = 'data/test'
 VAL_SET = 'playing_cards_large/val'
@@ -30,12 +30,13 @@ if device != 'cpu':
 # DATASET, train/test split, create dataloaders
 train_set: YoloCustomDataset = YoloCustomDataset(os.path.join(TRAIN_SET, 'images'), os.path.join(TRAIN_SET, 'labels'), img_size=IMG_SIZE)
 test_set: YoloCustomDataset = YoloCustomDataset(os.path.join(TEST_SET, 'images'), os.path.join(TEST_SET, 'labels'), img_size=IMG_SIZE)
+print(len(train_set), len(test_set))
 train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True), DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=True)
 
 
 # LOAD MODEL
 model = SpadeClassifier(53).to(device)
-model.load_state_dict(torch.load("finetuned_models/model.pt", weights_only=True, map_location=device))
+model.load_state_dict(torch.load("old_models/model_142/model.pt", map_location=device))
 
 
 # TRAINING PARAMS
@@ -43,7 +44,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-4)
 loss_fn = torch.nn.BCEWithLogitsLoss()
 train_loss = []
 test_loss = []
-epochs = 200
+epochs = 50
 
 
 # EVALUATE
@@ -112,7 +113,7 @@ def train_one_epoch() -> None:
         if iteration % 100 == 0:
             # Compute metrics over the entire training set
             accuracy, precision, recall, f1 = calculate_metrics(total_tp, total_fp, total_tn, total_fn)
-            print(f"Metrics - Accuracy: {(accuracy*100):.2f}%, Precision: {(100*precision):.2f}%, Recall: {(100*recall):.2f}%, F1-Score: {(100*f1):.2f}%")
+            print(f"Iteration {iteration} - Accuracy: {(accuracy*100):.2f}%, Precision: {(100*precision):.2f}%, Recall: {(100*recall):.2f}%, F1-Score: {(100*f1):.2f}%")
 
     train_loss.append(running_loss / len(train_load))
 
@@ -153,7 +154,7 @@ def test_one_epoch() -> None:
 # TRAINING LOOP
 for epoch in range(epochs):
     print(f"-- Starting Epoch {epoch}: --")
-    #train_one_epoch()
+    train_one_epoch()
     test_one_epoch()
     torch.cuda.empty_cache()  # Empty memory cache of GPU
 
