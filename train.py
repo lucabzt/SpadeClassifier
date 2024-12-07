@@ -4,13 +4,14 @@ Script for training the SpadeClassifier model on the playing_card_dataset.
 
 # IMPORTS
 import torch
+from torch import nn
 from dataset import PlayingCardDataset
 from yolo_dataset import YoloCustomDataset
 from torch.utils.data import DataLoader
 from SpadeClassifier import SpadeClassifier
 import matplotlib.pyplot as plt
 import os
-
+from torchvision.models import resnet101, ResNet101_Weights
 
 # PARAMS
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -35,7 +36,8 @@ train_load, test_load = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=Tru
 
 
 # LOAD MODEL
-model = SpadeClassifier(52).to(device)
+model = resnet101(weights=ResNet101_Weights.DEFAULT).to(device)
+model.fc = nn.Linear(in_features=model.fc.in_features, out_features=52)
 
 
 # TRAINING PARAMS
