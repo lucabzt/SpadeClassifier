@@ -20,6 +20,7 @@ class YoloCustomDataset(Dataset):
 
         # Load image and apply transformations
         image = cv2.imread(image_path)
+        print(image.shape)
         image = cv2.resize(image, self.img_size)
         image = torch.tensor(image)
         image = image.permute(2, 0, 1).float() / 255.0

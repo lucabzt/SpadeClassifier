@@ -23,6 +23,7 @@ for i in range(5):
     # Get topk
     indices = torch.topk(preds_cropped, 3).indices
     preds = [cards_large[i] for i in indices]
+    #labels = [cards_large[i] for i in labels_indices]
 
     # Print labels
     print(indices)

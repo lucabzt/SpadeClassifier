@@ -19,13 +19,13 @@ BATCH_SIZE = 32
 TRAIN_SET = 'data/train'
 TEST_SET = 'data/test'
 VAL_SET = 'playing_cards_large/val'
-IMG_SIZE = (480, 480) # 4080 brennt!
+IMG_SIZE = (320, 320) # 4080 brennt!
 print(f"MODEL RUNNING ON DEVICE: {device}")
 
 
 # SAVE GPU FROM SETTING ON FIRE
-if device != 'cpu':
-    torch.cuda.set_per_process_memory_fraction(0.8, device=0)
+ #if device != 'cpu':
+    #torch.cuda.set_per_process_memory_fraction(0.9, device=0)
 
 
 # DATASET, train/test split, create dataloaders
